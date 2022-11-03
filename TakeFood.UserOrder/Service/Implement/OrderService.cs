@@ -60,6 +60,16 @@ public class OrderService : IOrderService
         order.PhoneNumber = dto.PhongeNumber;
         order.Note = dto.Note;
         order.StoreId = dto.StoreId;
+        var foodsStoreId = foodRepository.FindAsync(x => x.StoreId == order.StoreId).Result.Select(x => x.Id);
+        double money = 0;
+        foreach(var foodItem in dto.ListFood)
+        {
+            if (foodsStoreId.Contains(foodItem.FoodId))
+            {
+                var food = await foodRepository.FindByIdAsync(foodItem.FoodId);
+                money += food.Price * foodItem.Quantity;
 
+            }
+        }
     }
 }

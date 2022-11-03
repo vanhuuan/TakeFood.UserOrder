@@ -59,7 +59,7 @@ public class CreateOrderDto
     /// </summary>
     [JsonPropertyName("listFood")]
     [Required]
-    public FoodItem ListFood { get; set; }
+    public List<FoodItem> ListFood { get; set; }
 }
 
 public class FoodItem
