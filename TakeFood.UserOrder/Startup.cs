@@ -161,6 +161,8 @@ public class Startup
         services.AddMongoRepository<Order>(appSetting.NoSQL.Collections.Order);
         services.AddMongoRepository<Voucher>(appSetting.NoSQL.Collections.Voucher);
         services.AddMongoRepository<Store>(appSetting.NoSQL.Collections.Store);
+        services.AddMongoRepository<FoodOrder>(appSetting.NoSQL.Collections.FoodOrder);
+        services.AddMongoRepository<ToppingOrder>(appSetting.NoSQL.Collections.ToppingOrder);
 
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICategoryService, CategoryService>();

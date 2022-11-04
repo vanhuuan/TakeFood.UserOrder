@@ -1,5 +1,4 @@
-﻿using StoreService.Model.Entities.Address;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace TakeFood.UserOrder.ViewModel.Dtos;
@@ -10,14 +9,12 @@ public class CreateOrderDto
     /// Display Name
     /// </summary>
     [JsonPropertyName("address")]
-    [Required]
-    public string Address { get; set; }
+    public string? Address { get; set; }
     /// <summary>
     /// Display Name
     /// </summary>
     [JsonPropertyName("addressId")]
-    [Required]
-    public string AddressId { get; set; }
+    public string? AddressId { get; set; }
     /// <summary>
     /// Display Name
     /// </summary>
@@ -35,7 +32,7 @@ public class CreateOrderDto
     /// </summary>
     [JsonPropertyName("voucherId")]
     [Required]
-    public string VoucherId { get; set;}
+    public string VoucherId { get; set; }
     /// <summary>
     /// Payment method
     /// </summary>
@@ -54,6 +51,7 @@ public class CreateOrderDto
     [JsonPropertyName("storeId")]
     [Required]
     public string StoreId { get; set; }
+
     /// <summary>
     /// List food
     /// </summary>
@@ -81,13 +79,9 @@ public class FoodItem
     /// </summary>
     [JsonPropertyName("quantity")]
     [Required]
-    public int Quantity { get { return Quantity; }
-        set
-        {
-            if (value < 0)
-                throw new InvalidOperationException("Quantity cannot be zero or negative");
-            Quantity = value;
-        }
+    public int Quantity
+    {
+        get; set;
     }
 }
 
@@ -106,12 +100,6 @@ public class ToppingItem
     [Required]
     public int Quantity
     {
-        get { return Quantity; }
-        set
-        {
-            if (value <= 0)
-                throw new InvalidOperationException("Quantity cannot be zero or negative");
-            Quantity = value;
-        }
+        get; set;
     }
 }
