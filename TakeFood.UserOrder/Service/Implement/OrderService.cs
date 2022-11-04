@@ -175,6 +175,7 @@ public class OrderService : IOrderService
             foodDetailsItem.Toppings = listTopping;
             listfoods.Add(foodDetailsItem);
         }
+        details.Foods = listfoods;
         return details;
 
     }
