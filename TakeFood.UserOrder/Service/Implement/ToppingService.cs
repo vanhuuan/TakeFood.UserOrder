@@ -1,8 +1,5 @@
-﻿using StoreService.Model.Entities.Order;
-using StoreService.Model.Entities.Topping;
+﻿using StoreService.Model.Entities.Topping;
 using StoreService.Model.Repository;
-using System.Runtime.InteropServices;
-using System.Xml.Linq;
 using TakeFood.UserOrderService.ViewModel.Dtos.Topping;
 
 namespace TakeFood.UserOrderService.Service.Implement
@@ -51,11 +48,11 @@ namespace TakeFood.UserOrderService.Service.Implement
         public async Task<List<ToppingViewDto>> GetAllToppingByStoreID(string StoreID, string state)
         {
             List<Topping> toppings = new List<Topping>();
-            if(state.Equals("") || state == null) toppings = (List<Topping>)await _ToppingRepository.FindAsync(x => x.StoreID == StoreID);
+            if (state.Equals("") || state == null) toppings = (List<Topping>)await _ToppingRepository.FindAsync(x => x.StoreID == StoreID);
             else toppings = (List<Topping>)await _ToppingRepository.FindAsync(x => x.StoreID == StoreID && x.State == state);
 
             List<ToppingViewDto> listTopping = new();
-            foreach(Topping topping in toppings)
+            foreach (Topping topping in toppings)
             {
                 ToppingViewDto temp = new ToppingViewDto()
                 {
@@ -78,7 +75,7 @@ namespace TakeFood.UserOrderService.Service.Implement
                 Name = topping.Name,
                 Price = topping.Price,
                 ID = topping.Id,
-                State=topping.State
+                State = topping.State
             };
         }
 

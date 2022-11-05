@@ -23,6 +23,7 @@ using StoreService.Service.Implement;
 using StoreService.Settings;
 using System.Diagnostics;
 using System.Text.Json;
+using TakeFood.UserOrder.Hubs;
 using TakeFood.UserOrder.Service;
 using TakeFood.UserOrder.Service.Implement;
 using TakeFood.UserOrderService.Service;
@@ -179,16 +180,18 @@ public class Startup
 
         services.AddCors(options =>
         {
-            options.AddDefaultPolicy(
+            options.AddPolicy("AllowAll",
                 builder =>
                 {
-                    builder.AllowAnyOrigin()
+                    builder.WithOrigins("http://localhost:3000")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
-                    //.AllowCredentials();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
                 }
             );
         });
+
+        services.AddSignalR();
     }
 
     /// <summary>
@@ -211,6 +214,7 @@ public class Startup
             app.UseDefaultFiles();
 
             app.UseStaticFiles();
+            app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseSwagger();
@@ -218,6 +222,7 @@ public class Startup
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<NotificationHub>("/notifysocket");
             });
 
         }

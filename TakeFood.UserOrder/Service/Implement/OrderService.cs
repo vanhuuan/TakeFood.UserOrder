@@ -128,6 +128,42 @@ public class OrderService : IOrderService
         // Call api to notify owner
     }
 
+    public async Task<NotifyDto> GetNotifyInfo(string storeId)
+    {
+        var order = await orderRepository.FindByIdAsync(storeId);
+        if (order == null)
+        {
+            throw new Exception("Order's not exist");
+        }
+        string message = "Cửa hàng đã xác nhận";
+        switch (order.Sate)
+        {
+            case "Đã xác nhận":
+                {
+                    break;
+                }
+            case "Sẵn sàng":
+                {
+                    message = "Đơn hàng đã sẵn sáng để giao/ lấy";
+                    break;
+                }
+            case "Hoàn tất":
+                {
+                    message = "Đơn hàng đã hoàn tất";
+                    break;
+                }
+            default: message = "Message nay chi de test thoi"; break;
+        }
+
+        var dto = new NotifyDto()
+        {
+            UserId = order.UserId,
+            Header = "Cập nhật trạng thái đơn hàng",
+            Message = message
+        };
+        return dto;
+    }
+
     public async Task<OrderDetailDto> GetOrderDetail(string userId, string orderId)
     {
         var order = await orderRepository.FindByIdAsync(orderId);
