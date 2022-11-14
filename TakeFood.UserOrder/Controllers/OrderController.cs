@@ -6,7 +6,9 @@ using System.ComponentModel.DataAnnotations;
 using TakeFood.UserOrder.Hubs;
 using TakeFood.UserOrder.Service;
 using TakeFood.UserOrder.ViewModel.Dtos;
+using TakeFood.UserOrder.ViewModel.Dtos.Order;
 using TakeFood.UserOrderService.Controllers;
+using TakeFood.UserOrderService.Model.Entities;
 
 namespace TakeFood.UserOrder.Controllers;
 
@@ -118,6 +120,46 @@ public class OrderController : BaseController
                 await notificationUserHubContext.Clients.Client(connectionId).SendAsync("sendToUser", rs.Header, rs.Message);
             }
             return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpGet]
+    [Authorize(roles: Roles.Admin)]
+    [Route("GetOrderPaging")]
+    public async Task<IActionResult> GetOrderAdmin(GetPagingOrderDto dto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            var rs = await OrderService.GetPagingOrder(dto);
+            return Ok(rs);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpGet]
+    [Authorize(roles: Roles.Admin)]
+    [Route("GetOrderAdmindetail")]
+    public async Task<IActionResult> GetOrderAdminDetailAsync([Required] string orderId)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            var rs = await OrderService.GetOrderDetail(orderId);
+            return Ok(rs);
         }
         catch (Exception e)
         {

@@ -140,6 +140,7 @@ public class OrderService : IOrderService
         {
             case "Đã xác nhận":
                 {
+                    message = "Cửa hàng đã xác nhận";
                     break;
                 }
             case "Sẵn sàng":
@@ -216,6 +217,67 @@ public class OrderService : IOrderService
 
     }
 
+    public async Task<OrderPagingResponse> GetPagingOrder(GetPagingOrderDto dto)
+    {
+        var filter = CreateOrderFilter(dto.From, dto.To, dto.UserId, dto.StateType, dto.CreatedFrom, dto.CreatedTo);
+        var rs = await orderRepository.GetPagingAsync(filter, dto.PageNumber - 1, dto.PageSize);
+        var list = new List<OrderAdminCard>();
+        foreach (var order in rs.Data)
+        {
+            var address = await addressRepository.FindByIdAsync(order.AddressId);
+            var addressString = address == null ? "Lỗi" : address.Addrress;
+            list.Add(new OrderAdminCard()
+            {
+                OrderId = order.Id,
+                Address = addressString,
+                OrderDate = order.CreatedDate!.Value,
+                PhoneNumber = order.PhoneNumber,
+                State = order.Sate,
+                Total = order.Total
+            });
+        }
+        switch (dto.SortType)
+        {
+            case "OrderId": list = list.OrderBy(x => x.OrderId).ToList(); break;
+            case "Total": list = list.OrderBy(x => x.Total).ToList(); break;
+            case "CreateDate": list = list.OrderBy(x => x.OrderDate).ToList(); break;
+        }
+        int stt = 0;
+        foreach (var i in list)
+        {
+            stt++;
+            i.Id = stt;
+            i.Stt = stt;
+        }
+        var info = new OrderPagingResponse()
+        {
+            Total = rs.Count,
+            PageIndex = dto.PageNumber,
+            PageSize = dto.PageSize,
+            Cards = list
+        };
+        return info;
+    }
+
+    private FilterDefinition<Order> CreateOrderFilter(double from, double to, string uid, string orderState, DateTime startDate, DateTime endDate)
+    {
+        var filter = Builders<Order>.Filter.Eq(x => x.UserId, uid);
+        filter &= Builders<Order>.Filter.Gte(x => x.Total, from);
+        filter &= Builders<Order>.Filter.Lte(x => x.Total, to);
+        if (!(startDate == DateTime.MinValue || startDate == DateTime.MinValue))
+        {
+            filter &= Builders<Order>.Filter.Gte(x => x.CreatedDate, startDate);
+            filter &= Builders<Order>.Filter.Lte(x => x.CreatedDate, endDate);
+        }
+        if (orderState != "All")
+        {
+            filter &= Builders<Order>.Filter.Eq(x => x.Sate, orderState);
+        }
+        return filter;
+    }
+
+
+
     public async Task<List<OrderCardDto>> GetUserOrders(string userId, int index)
     {
         var orders = new List<OrderCardDto>();
@@ -236,5 +298,52 @@ public class OrderService : IOrderService
             });
         }
         return orders;
+    }
+
+    public async Task<OrderDetailDto> GetOrderDetail(string orderId)
+    {
+        var order = await orderRepository.FindByIdAsync(orderId);
+        var details = new OrderDetailDto();
+        details.State = order.Sate;
+        details.Note = order.Note;
+        details.OrderId = order.Id;
+        details.PhoneNumber = order.PhoneNumber;
+        var address = await addressRepository.FindByIdAsync(order.AddressId);
+        details.Address = address.Addrress;
+        details.Total = order.Total;
+        details.PaymentMethod = order.PaymentMethod;
+        var foodsOrder = await foodOrderRepository.FindAsync(x => x.OrderId == order.Id);
+        var listfoods = new List<FoodDetailsItem>();
+        foreach (var i in foodsOrder)
+        {
+            var foodDetailsItem = new FoodDetailsItem();
+            var food = await foodRepository.FindByIdAsync(i.FoodId);
+            if (food == null) continue;
+            foodDetailsItem.FoodId = food.Id;
+            foodDetailsItem.FoodName = food.Name;
+            foodDetailsItem.Quantity = i.Quantity;
+            var listTopping = new List<ToppingDetailsItem>();
+            var toppingOrders = await toppingOrderRepository.FindAsync(x => x.FoodOrderId == i.Id);
+            double total = food.Price * i.Quantity;
+            foreach (var toppingOrder in toppingOrders)
+            {
+                var topping = await toppingRepository.FindByIdAsync(toppingOrder.ToppingId);
+                if (topping == null) continue;
+                var t = new ToppingDetailsItem()
+                {
+                    ToppingId = topping.Id,
+                    ToppingName = topping.Name,
+                    Total = topping.Price * toppingOrder.Quantity,
+                    Quantity = toppingOrder.Quantity
+                };
+                listTopping.Add(t);
+                total += topping.Price * toppingOrder.Quantity;
+            }
+            foodDetailsItem.Total = total;
+            foodDetailsItem.Toppings = listTopping;
+            listfoods.Add(foodDetailsItem);
+        }
+        details.Foods = listfoods;
+        return details;
     }
 }

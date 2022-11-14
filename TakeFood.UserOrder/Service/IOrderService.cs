@@ -10,4 +10,6 @@ public interface IOrderService
     Task<List<OrderCardDto>> GetUserOrders(string userId, int index);
     Task<NotifyDto> GetNotifyInfo(string storeId);
     Task<OrderDetailDto> GetOrderDetail(string userId, string orderId);
+    Task<OrderDetailDto> GetOrderDetail(string orderId);
+    Task<OrderPagingResponse> GetPagingOrder(GetPagingOrderDto dto);
 }
