@@ -223,7 +223,8 @@ public class OrderService : IOrderService
     public async Task<OrderPagingResponse> GetPagingOrder(GetPagingOrderDto dto)
     {
         var filter = CreateOrderFilter(dto.From, dto.To, dto.UserId, dto.StateType, dto.CreatedFrom, dto.CreatedTo);
-        var rs = await orderRepository.GetPagingAsync(filter, dto.PageNumber - 1, dto.PageSize);
+        var sort = CreateSortFilter(dto.SortType, dto.SortBy);
+        var rs = await orderRepository.GetPagingAsync(filter, dto.PageNumber - 1, dto.PageSize, sort);
         var list = new List<OrderAdminCard>();
         foreach (var order in rs.Data)
         {
@@ -238,12 +239,6 @@ public class OrderService : IOrderService
                 State = order.Sate,
                 Total = order.Total
             });
-        }
-        switch (dto.SortType)
-        {
-            case "OrderId": list = list.OrderBy(x => x.OrderId).ToList(); break;
-            case "Total": list = list.OrderBy(x => x.Total).ToList(); break;
-            case "CreateDate": list = list.OrderBy(x => x.OrderDate).ToList(); break;
         }
         int stt = 0;
         foreach (var i in list)
@@ -279,7 +274,30 @@ public class OrderService : IOrderService
         return filter;
     }
 
+    private SortDefinition<Order> CreateSortFilter(string sortType, string sortBy)
+    {
+        if (sortType == "Asc")
+        {
+            switch (sortBy)
+            {
+                case "OrderId": return Builders<Order>.Sort.Ascending(x => x.Id);
+                case "Total": return Builders<Order>.Sort.Ascending(x => x.Total);
+                case "CreateDate": return Builders<Order>.Sort.Ascending(x => x.CreatedDate);
+                default: return Builders<Order>.Sort.Ascending(x => x.CreatedDate);
+            }
+        }
+        else
+        {
+            switch (sortBy)
+            {
+                case "OrderId": return Builders<Order>.Sort.Descending(x => x.Id);
+                case "Total": return Builders<Order>.Sort.Descending(x => x.Total);
+                case "CreateDate": return Builders<Order>.Sort.Descending(x => x.CreatedDate);
+                default: return Builders<Order>.Sort.Descending(x => x.CreatedDate);
+            }
+        }
 
+    }
 
     public async Task<List<OrderCardDto>> GetUserOrders(string userId, int index)
     {
