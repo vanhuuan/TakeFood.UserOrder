@@ -282,7 +282,7 @@ public class OrderService : IOrderService
     {
         var orders = new List<OrderCardDto>();
         FilterDefinition<Order> constrain = Builders<Order>.Filter.Where(x => x.UserId == userId);
-        var listOrder = orderRepository.FindAsync(x => x.UserId == userId).Result.Take(index * 10).TakeLast(10);
+        var listOrder = orderRepository.FindAsync(x => x.UserId == userId).Result.Reverse().Take(index * 10).TakeLast(10);
         foreach (var order in listOrder)
         {
             var store = await storeRepository.FindByIdAsync(order.StoreId);
