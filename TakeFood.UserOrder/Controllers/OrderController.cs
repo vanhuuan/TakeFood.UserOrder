@@ -149,7 +149,7 @@ public class OrderController : BaseController
 
     [HttpGet]
     [Authorize(roles: Roles.Admin)]
-    [Route("GetOrderAdmindetail")]
+    [Route("GetOrderAdminDetail")]
     public async Task<IActionResult> GetOrderAdminDetailAsync([Required] string orderId)
     {
         try

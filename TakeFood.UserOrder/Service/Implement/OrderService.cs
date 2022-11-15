@@ -172,6 +172,7 @@ public class OrderService : IOrderService
         {
             throw new Exception("Order's note exist");
         }
+        var store = await storeRepository.FindByIdAsync(order.StoreId);
         var details = new OrderDetailDto();
         details.State = order.Sate;
         details.Note = order.Note;
@@ -181,6 +182,7 @@ public class OrderService : IOrderService
         details.Address = address.Addrress;
         details.Total = order.Total;
         details.PaymentMethod = order.PaymentMethod;
+        details.StoreName = store != null ? store.Name : "Cửa hàng không tồn tại";
         var foodsOrder = await foodOrderRepository.FindAsync(x => x.OrderId == order.Id);
         var listfoods = new List<FoodDetailsItem>();
         foreach (var i in foodsOrder)
@@ -213,6 +215,7 @@ public class OrderService : IOrderService
             listfoods.Add(foodDetailsItem);
         }
         details.Foods = listfoods;
+        details.Discount = order.Discount;
         return details;
 
     }
