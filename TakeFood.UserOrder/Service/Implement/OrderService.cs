@@ -324,7 +324,7 @@ public class OrderService : IOrderService
     public async Task<OrderDetailDto> GetOrderDetail(string orderId)
     {
         var order = await orderRepository.FindByIdAsync(orderId);
-        var store = await storeRepository.FindByIdAsync(order.Id);
+        var store = await storeRepository.FindByIdAsync(order.StoreId);
         var details = new OrderDetailDto();
         details.State = order.Sate;
         details.Note = order.Note;
