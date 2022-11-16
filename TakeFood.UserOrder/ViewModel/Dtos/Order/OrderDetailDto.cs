@@ -11,6 +11,7 @@ public class OrderDetailDto
     public string Note { get; set; }
     public double Total { get; set; }
     public double Discount { get; set; }
+    public DateTime OrderDate { get; set; }
     public List<FoodDetailsItem> Foods { get; set; }
 }
 

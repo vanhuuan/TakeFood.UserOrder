@@ -324,6 +324,7 @@ public class OrderService : IOrderService
     public async Task<OrderDetailDto> GetOrderDetail(string orderId)
     {
         var order = await orderRepository.FindByIdAsync(orderId);
+        var store = await storeRepository.FindByIdAsync(order.Id);
         var details = new OrderDetailDto();
         details.State = order.Sate;
         details.Note = order.Note;
@@ -365,6 +366,9 @@ public class OrderService : IOrderService
             listfoods.Add(foodDetailsItem);
         }
         details.Foods = listfoods;
+        details.Discount = order.Discount;
+        details.StoreName = store != null ? store.Name : "Cửa hàng đã bị xóa";
+        details.OrderDate = order.CreatedDate != null? order.CreatedDate.Value:DateTime.MinValue;
         return details;
     }
 }
