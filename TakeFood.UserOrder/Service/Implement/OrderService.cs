@@ -113,7 +113,7 @@ public class OrderService : IOrderService
             }
         }
         var voucher = await voucherRepository.FindByIdAsync(dto.VoucherId);
-        if (voucher != null && money >= voucher.MinSpend && voucher.StartDay <= DateTime.UtcNow && voucher.ExpireDay <= DateTime.UtcNow)
+        if (voucher != null && money >= voucher.MinSpend && voucher.StartDay <= DateTime.UtcNow && voucher.ExpireDay >= DateTime.UtcNow)
         {
             var discount = money * (voucher.Amount / 100);
             if (discount > voucher.MaxDiscount)
@@ -216,6 +216,7 @@ public class OrderService : IOrderService
         }
         details.Foods = listfoods;
         details.Discount = order.Discount;
+        details.OrderDate = order.CreatedDate != null ? order.CreatedDate.Value : DateTime.MinValue;
         return details;
 
     }
@@ -303,7 +304,8 @@ public class OrderService : IOrderService
     {
         var orders = new List<OrderCardDto>();
         FilterDefinition<Order> constrain = Builders<Order>.Filter.Where(x => x.UserId == userId);
-        var listOrder = await orderRepository.GetPagingAsync(constrain, index, 10);
+        SortDefinition<Order> sort = Builders<Order>.Sort.Descending(x => x.CreatedDate);
+        var listOrder = await orderRepository.GetPagingAsync(constrain, index, 1, sort);
         foreach (var order in listOrder.Data)
         {
             var store = await storeRepository.FindByIdAsync(order.StoreId);
@@ -368,7 +370,7 @@ public class OrderService : IOrderService
         details.Foods = listfoods;
         details.Discount = order.Discount;
         details.StoreName = store != null ? store.Name : "Cửa hàng đã bị xóa";
-        details.OrderDate = order.CreatedDate != null? order.CreatedDate.Value:DateTime.MinValue;
+        details.OrderDate = order.CreatedDate != null ? order.CreatedDate.Value : DateTime.MinValue;
         return details;
     }
 }
