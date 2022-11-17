@@ -305,7 +305,7 @@ public class OrderService : IOrderService
         var orders = new List<OrderCardDto>();
         FilterDefinition<Order> constrain = Builders<Order>.Filter.Where(x => x.UserId == userId);
         SortDefinition<Order> sort = Builders<Order>.Sort.Descending(x => x.CreatedDate);
-        var listOrder = await orderRepository.GetPagingAsync(constrain, index, 1, sort);
+        var listOrder = await orderRepository.GetPagingAsync(constrain, index - 1, 10, sort);
         foreach (var order in listOrder.Data)
         {
             var store = await storeRepository.FindByIdAsync(order.StoreId);
