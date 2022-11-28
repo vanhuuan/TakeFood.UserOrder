@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using StoreService.Middleware;
 using StoreService.Service;
 using System.ComponentModel.DataAnnotations;
 using TakeFood.UserOrder.Hubs;
@@ -8,7 +7,6 @@ using TakeFood.UserOrder.Service;
 using TakeFood.UserOrder.ViewModel.Dtos;
 using TakeFood.UserOrder.ViewModel.Dtos.Order;
 using TakeFood.UserOrderService.Controllers;
-using TakeFood.UserOrderService.Model.Entities;
 
 namespace TakeFood.UserOrder.Controllers;
 
@@ -25,7 +23,6 @@ public class OrderController : BaseController
     }
 
     [HttpPost]
-    [Authorize]
     [Route("CreateOrder")]
     public async Task<IActionResult> AddOrderAsync([FromBody] CreateOrderDto dto)
     {
@@ -45,7 +42,6 @@ public class OrderController : BaseController
     }
 
     [HttpPut]
-    [Authorize]
     [Route("CancelOrder")]
     public async Task<IActionResult> CancelOrderAsync([Required] string orderId)
     {
@@ -65,7 +61,6 @@ public class OrderController : BaseController
     }
 
     [HttpGet]
-    [Authorize]
     [Route("GetOrders")]
     public async Task<IActionResult> GetOrdersAsync([Required] int index)
     {
@@ -85,7 +80,6 @@ public class OrderController : BaseController
     }
 
     [HttpGet]
-    [Authorize]
     [Route("GetOrderdetail")]
     public async Task<IActionResult> GetOrderDetailAsync([Required] string orderId)
     {
@@ -128,7 +122,6 @@ public class OrderController : BaseController
     }
 
     [HttpGet]
-    [Authorize(roles: Roles.Admin)]
     [Route("GetOrderPaging")]
     public async Task<IActionResult> GetOrderAdmin(GetPagingOrderDto dto)
     {
@@ -148,7 +141,6 @@ public class OrderController : BaseController
     }
 
     [HttpGet]
-    [Authorize(roles: Roles.Admin)]
     [Route("GetOrderAdminDetail")]
     public async Task<IActionResult> GetOrderAdminDetailAsync([Required] string orderId)
     {
@@ -169,8 +161,8 @@ public class OrderController : BaseController
 
     public string GetId()
     {
-        String token = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last()!;
-        return JwtService.GetId(token);
+        String id = HttpContext.Items["Id"]!.ToString()!;
+        return id;
     }
     public string GetId(string token)
     {
