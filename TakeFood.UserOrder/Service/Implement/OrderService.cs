@@ -125,7 +125,8 @@ public class OrderService : IOrderService
         }
         order.Total = money;
         await orderRepository.UpdateAsync(order);
-        // Call api to notify owner
+        using var client = new HttpClient();
+        var result = await client.GetAsync("https://takefood-orderservice.azurewebsites.net/api/Order/Notify?orderId=" + order.Id);
     }
 
     public async Task<NotifyDto> GetNotifyInfo(string storeId)
