@@ -144,22 +144,22 @@ public class OrderService : IOrderService
         string message = "Cửa hàng đã xác nhận";
         switch (order.Sate)
         {
-            case "Đã xác nhận":
+            case "Processing":
                 {
                     message = "Cửa hàng đã xác nhận";
                     break;
                 }
-            case "Sẵn sàng":
+            case "Delivering":
                 {
                     message = "Đơn hàng đã sẵn sáng để giao/ lấy";
                     break;
                 }
-            case "Hoàn tất":
+            case "Delivered":
                 {
                     message = "Đơn hàng đã hoàn tất";
                     break;
                 }
-            default: message = "Message nay chi de test thoi"; break;
+            default: message = "Đơn hàng đã cập nhật trạng thái"; break;
         }
 
         var dto = new NotifyDto()
