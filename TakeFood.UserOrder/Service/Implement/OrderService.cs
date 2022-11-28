@@ -151,7 +151,7 @@ public class OrderService : IOrderService
                 }
             case "Delivering":
                 {
-                    message = "Đơn hàng đã sẵn sáng để giao/ lấy";
+                    message = "Đơn hàng đã sẵn sàng để giao/ lấy";
                     break;
                 }
             case "Delivered":
