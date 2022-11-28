@@ -45,7 +45,7 @@ public class OrderService : IOrderService
         }
         order.Sate = "Canceled";
         await orderRepository.UpdateAsync(order);
-        // Call api to notify owner
+        await NotifyAsync(order.Id);
     }
 
     public async Task CreateOrderAsync(CreateOrderDto dto, string userId)
@@ -125,8 +125,13 @@ public class OrderService : IOrderService
         }
         order.Total = money;
         await orderRepository.UpdateAsync(order);
+        await NotifyAsync(order.Id);
+    }
+
+    private async Task NotifyAsync(string orderId)
+    {
         using var client = new HttpClient();
-        var result = await client.GetAsync("https://takefood-orderservice.azurewebsites.net/api/Order/Notify?orderId=" + order.Id);
+        var result = await client.GetAsync("https://takefood-orderservice.azurewebsites.net/api/Order/Notify?orderId=" + orderId);
     }
 
     public async Task<NotifyDto> GetNotifyInfo(string storeId)
