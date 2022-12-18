@@ -324,7 +324,7 @@ public class OrderService : IOrderService
                 StoreName = store.Name,
                 Total = order.Total,
                 FoodQuantity = foodQuantity,
-                Created = order.CreatedDate!.Value
+                Created = order.CreatedDate!.Value.AddHours(+7)
             });
         }
         return orders;
@@ -377,7 +377,7 @@ public class OrderService : IOrderService
         details.Foods = listfoods;
         details.Discount = order.Discount;
         details.StoreName = store != null ? store.Name : "Cửa hàng đã bị xóa";
-        details.OrderDate = order.CreatedDate != null ? order.CreatedDate.Value : DateTime.MinValue;
+        details.OrderDate = order.CreatedDate != null ? order.CreatedDate.Value.AddHours(7) : DateTime.MinValue;
         return details;
     }
 }
