@@ -323,7 +323,8 @@ public class OrderService : IOrderService
                 State = order.Sate,
                 StoreName = store.Name,
                 Total = order.Total,
-                FoodQuantity = foodQuantity
+                FoodQuantity = foodQuantity,
+                Created = order.CreatedDate!.Value
             });
         }
         return orders;

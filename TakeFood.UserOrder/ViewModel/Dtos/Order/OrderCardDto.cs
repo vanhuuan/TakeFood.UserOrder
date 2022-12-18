@@ -6,5 +6,6 @@ public class OrderCardDto
     public string StoreName { get; set; }
     public string State { get; set; }
     public double Total { get; set; }
+    public DateTime Created { get; set; }
     public int FoodQuantity { get; set; }
 }
