@@ -1,4 +1,7 @@
 ﻿using MongoDB.Driver;
+using Newtonsoft.Json.Linq;
+using PayPalCheckoutSdk.Core;
+using PayPalCheckoutSdk.Orders;
 using StoreService.Model.Entities.Address;
 using StoreService.Model.Entities.Food;
 using StoreService.Model.Entities.Order;
@@ -8,6 +11,9 @@ using StoreService.Model.Entities.Voucher;
 using StoreService.Model.Repository;
 using TakeFood.UserOrder.ViewModel.Dtos;
 using TakeFood.UserOrder.ViewModel.Dtos.Order;
+using Order = StoreService.Model.Entities.Order.Order;
+using OrderPaypal = PayPalCheckoutSdk.Orders.Order;
+using PaypalResponse = PayPalHttp.HttpResponse;
 
 namespace TakeFood.UserOrder.Service.Implement;
 
@@ -22,6 +28,9 @@ public class OrderService : IOrderService
     private readonly IMongoRepository<Address> addressRepository;
     private readonly IMongoRepository<Store> storeRepository;
     private readonly IMongoRepository<Voucher> voucherRepository;
+    private readonly PayPalHttpClient PaypalClient;
+    private static String clientId = "AY9Ht8HTXWGsrpY02HujZA1NDBWXeakgmEWjgA0vY864tGe2YNfC6HWErCJ4xcxupMEblg5hZcX8Ihbv";
+    private static String secret = "ECb4AWb-kGX8Leuu3ReilEgkCj9md1q81aYeGVlC-QlKN0hITRsrHKmy2hRctZzLO5HdDvMxhW1Ltna2";
     public OrderService(IMongoRepository<Order> orderRepository, IMongoRepository<Food> foodRepository, IMongoRepository<FoodOrder> foodOrderRepository,
         IMongoRepository<Topping> toppingRepository, IMongoRepository<FoodTopping> foodToppingRepository, IMongoRepository<Address> addressRepository, IMongoRepository<ToppingOrder> toppingOrderRepository, IMongoRepository<Store> storeRepository, IMongoRepository<Voucher> voucherRepository)
     {
@@ -35,6 +44,8 @@ public class OrderService : IOrderService
         this.toppingOrderRepository = toppingOrderRepository;
         this.storeRepository = storeRepository;
         this.voucherRepository = voucherRepository;
+        PayPalEnvironment environment = new SandboxEnvironment(clientId, secret);
+        PaypalClient = new PayPalHttpClient(environment);
     }
     public async Task CancelOrderAsync(string orderId, string userId)
     {
@@ -48,7 +59,7 @@ public class OrderService : IOrderService
         await NotifyAsync(order.Id);
     }
 
-    public async Task CreateOrderAsync(CreateOrderDto dto, string userId)
+    public async Task<String> CreateOrderAsync(CreateOrderDto dto, string userId)
     {
         var store = await storeRepository.FindByIdAsync(dto.StoreId);
         if (store == null)
@@ -70,7 +81,6 @@ public class OrderService : IOrderService
             dto.AddressId = address.Id;
         }
         order.AddressId = dto.AddressId;
-        order.PaymentMethod = dto.PaymentMethod;
         order.Sate = "Ordered";
         order.Mode = "1";
         order.PhoneNumber = dto.PhongeNumber;
@@ -126,6 +136,71 @@ public class OrderService : IOrderService
         order.Total = money;
         await orderRepository.UpdateAsync(order);
         await NotifyAsync(order.Id);
+        string paymentUrl = "";
+        if (dto.PaymentMethod == "Paypal")
+        {
+            paymentUrl = await CreateOrderPaypalAsync(order.Total, order.Id);
+            order.PaymentMethod = "Paypal - Chưa thanh toán";
+        }
+        else
+        {
+            order.PaymentMethod = dto.PaymentMethod;
+        }
+        return paymentUrl;
+    }
+
+    private async Task<String> ConvertToUSD(double amount)
+    {
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Add("apikey", "534GZaethTRRqHUR6OdTV2fyFiVbwn3E");
+        HttpResponseMessage responseEx = await httpClient.GetAsync("https://api.apilayer.com/exchangerates_data/convert?to=USD&from=VND&amount=" + amount);
+
+        if (!responseEx.IsSuccessStatusCode)
+        {
+            throw new Exception("Payment failed");
+        }
+        JObject json = JObject.Parse(await responseEx.Content.ReadAsStringAsync());
+        return json["result"].ToString();
+    }
+
+    private async Task<String> CreateOrderPaypalAsync(double amount, string orderId)
+    {
+        PaypalResponse response;
+        var order = new OrderRequest()
+        {
+            CheckoutPaymentIntent = "CAPTURE",
+            PurchaseUnits = new List<PurchaseUnitRequest>()
+                {
+                    new PurchaseUnitRequest()
+                    {
+                        AmountWithBreakdown = new AmountWithBreakdown()
+                        {
+                            CurrencyCode = "USD",
+                            Value = await ConvertToUSD(amount)
+                        }
+                    }
+                },
+            ApplicationContext = new ApplicationContext()
+            {
+                ReturnUrl = "https://takefood-userorderservice.azurewebsites.net/NotifyPay?orderId=" + orderId,
+                CancelUrl = "https://takefood-userorderservice.azurewebsites.net/NotifyCancel?orderId=" + orderId
+            }
+        };
+
+        var request = new OrdersCreateRequest();
+        request.Prefer("return=representation");
+        request.RequestBody(order);
+        response = await PaypalClient.Execute(request);
+        var statusCode = response.StatusCode;
+        OrderPaypal result = response.Result<OrderPaypal>();
+        foreach (LinkDescription link in result.Links)
+        {
+            if (link.Rel == "payer-action")
+            {
+                return link.Href;
+            }
+        }
+        return "";
     }
 
     private async Task NotifyAsync(string orderId)
@@ -222,7 +297,7 @@ public class OrderService : IOrderService
         }
         details.Foods = listfoods;
         details.Discount = order.Discount;
-        details.OrderDate = order.CreatedDate != null ? order.CreatedDate.Value : DateTime.MinValue;
+        details.OrderDate = order.CreatedDate != null ? order.CreatedDate.Value.AddHours(+7) : DateTime.MinValue;
         return details;
 
     }
@@ -379,5 +454,39 @@ public class OrderService : IOrderService
         details.StoreName = store != null ? store.Name : "Cửa hàng đã bị xóa";
         details.OrderDate = order.CreatedDate != null ? order.CreatedDate.Value.AddHours(7) : DateTime.MinValue;
         return details;
+    }
+
+    public async Task<NotifyDto> NotifyPay(string orderId)
+    {
+        var order = await orderRepository.FindByIdAsync(orderId);
+        if (order == null)
+        {
+            throw new Exception("Order's not exist!");
+        }
+        var dto = new NotifyDto()
+        {
+            UserId = order.UserId,
+            Header = "Thanh tóan thành công",
+            Message = "Thanh toán " + order.Total + " thành công!"
+        };
+        return dto;
+    }
+
+    public async Task<NotifyDto> NotifyCancel(string orderId)
+    {
+        var order = await orderRepository.FindByIdAsync(orderId);
+        if (order == null)
+        {
+            throw new Exception("Order's not exist!");
+        }
+        var dto = new NotifyDto()
+        {
+            UserId = order.UserId,
+            Header = "Thanh tóan không thành công",
+            Message = "Thanh toán " + order.Total + " không thành công!"
+        };
+        order.Sate = "Canceled";
+        await orderRepository.UpdateAsync(order);
+        return dto;
     }
 }

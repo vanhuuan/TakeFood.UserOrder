@@ -32,8 +32,8 @@ public class OrderController : BaseController
             {
                 return BadRequest(ModelState.ErrorCount);
             }
-            await OrderService.CreateOrderAsync(dto, GetId());
-            return Ok();
+            var url = await OrderService.CreateOrderAsync(dto, GetId());
+            return Ok(url);
         }
         catch (Exception e)
         {
@@ -53,6 +53,52 @@ public class OrderController : BaseController
             }
             await OrderService.CancelOrderAsync(orderId, GetId());
             return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpGet]
+    [Route("NotifyPay")]
+    public async Task<IActionResult> NotifyPayAsync([Required] string orderId)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            var rs = await OrderService.NotifyPay(orderId);
+            foreach (var connectionId in NotificationHub._connections.GetConnections(rs.UserId))
+            {
+                await notificationUserHubContext.Clients.Client(connectionId).SendAsync("sendToUser", rs.Header, rs.Message);
+            }
+            return Ok("<h1> Thanh toán thành công, hãy quay lại ứng dụng </h1>");
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpGet]
+    [Route("NotifyCancel")]
+    public async Task<IActionResult> NotifyCancelAsync([Required] string orderId)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            var rs = await OrderService.NotifyCancel(orderId);
+            foreach (var connectionId in NotificationHub._connections.GetConnections(rs.UserId))
+            {
+                await notificationUserHubContext.Clients.Client(connectionId).SendAsync("sendToUser", rs.Header, rs.Message);
+            }
+            return Ok("<h1> Thanh toán không thành công, đơn hàng đã bị hủy</h1>");
         }
         catch (Exception e)
         {
