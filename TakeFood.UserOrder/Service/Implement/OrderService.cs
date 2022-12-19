@@ -176,14 +176,14 @@ public class OrderService : IOrderService
                         AmountWithBreakdown = new AmountWithBreakdown()
                         {
                             CurrencyCode = "USD",
-                            Value = await ConvertToUSD(amount)
+                            Value = "0.6"
                         }
                     }
                 },
             ApplicationContext = new ApplicationContext()
             {
-                ReturnUrl = "https://takefood-userorderservice.azurewebsites.net/NotifyPay?orderId=" + orderId,
-                CancelUrl = "https://takefood-userorderservice.azurewebsites.net/NotifyCancel?orderId=" + orderId
+                ReturnUrl = "https://takefood-apigateway-mobile.azurewebsites.net/NotifyPay?orderId=" + orderId,
+                CancelUrl = "https://takefood-apigateway-mobile.azurewebsites.net/NotifyCancel?orderId=" + orderId
             }
         };
 
@@ -195,7 +195,7 @@ public class OrderService : IOrderService
         OrderPaypal result = response.Result<OrderPaypal>();
         foreach (LinkDescription link in result.Links)
         {
-            if (link.Rel == "payer-action")
+            if (link.Rel == "approve")
             {
                 return link.Href;
             }
@@ -469,6 +469,8 @@ public class OrderService : IOrderService
             Header = "Thanh tóan thành công",
             Message = "Thanh toán " + order.Total + " thành công!"
         };
+        order.PaymentMethod = "Paypal - Thanh toán thành công";
+        await orderRepository.UpdateAsync(order);
         return dto;
     }
 
@@ -486,6 +488,7 @@ public class OrderService : IOrderService
             Message = "Thanh toán " + order.Total + " không thành công!"
         };
         order.Sate = "Canceled";
+        order.PaymentMethod = "Paypal - Thanh toán không thành công";
         await orderRepository.UpdateAsync(order);
         return dto;
     }
