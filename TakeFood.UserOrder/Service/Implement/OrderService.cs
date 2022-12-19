@@ -160,7 +160,7 @@ public class OrderService : IOrderService
             throw new Exception("Payment failed");
         }
         JObject json = JObject.Parse(await responseEx.Content.ReadAsStringAsync());
-        return json["result"].ToString();
+        return String.Format("{0:0.0}", Double.Parse(json["result"].ToString()));
     }
 
     private async Task<String> CreateOrderPaypalAsync(double amount, string orderId)
@@ -176,7 +176,7 @@ public class OrderService : IOrderService
                         AmountWithBreakdown = new AmountWithBreakdown()
                         {
                             CurrencyCode = "USD",
-                            Value = "0.6"
+                            Value = await ConvertToUSD(amount)
                         }
                     }
                 },
