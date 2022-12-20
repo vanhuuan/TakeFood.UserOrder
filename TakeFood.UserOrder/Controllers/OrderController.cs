@@ -75,7 +75,7 @@ public class OrderController : BaseController
             {
                 await notificationUserHubContext.Clients.Client(connectionId).SendAsync("sendToUser", rs.Header, rs.Message);
             }
-            return Ok("<h1> Thanh toán thành công, hãy quay lại ứng dụng </h1>");
+            return Ok();
         }
         catch (Exception e)
         {
@@ -98,7 +98,7 @@ public class OrderController : BaseController
             {
                 await notificationUserHubContext.Clients.Client(connectionId).SendAsync("sendToUser", rs.Header, rs.Message);
             }
-            return Ok("<h1> Thanh toán không thành công, đơn hàng đã bị hủy</h1>");
+            return Ok();
         }
         catch (Exception e)
         {

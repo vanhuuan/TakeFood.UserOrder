@@ -139,8 +139,8 @@ public class OrderService : IOrderService
         string paymentUrl = "";
         if (dto.PaymentMethod == "Paypal")
         {
-            paymentUrl = await CreateOrderPaypalAsync(order.Total, order.Id);
             order.PaymentMethod = "Paypal - Chưa thanh toán";
+            paymentUrl = await CreateOrderPaypalAsync(order.Total, order.Id);
         }
         else
         {
@@ -182,8 +182,8 @@ public class OrderService : IOrderService
                 },
             ApplicationContext = new ApplicationContext()
             {
-                ReturnUrl = "https://takefood-apigateway-mobile.azurewebsites.net/NotifyPay?orderId=" + orderId,
-                CancelUrl = "https://takefood-apigateway-mobile.azurewebsites.net/NotifyCancel?orderId=" + orderId
+                ReturnUrl = "https://okmanga.web.app/notifySuccess?orderId=" + orderId,
+                CancelUrl = "https://okmanga.web.app/notifyFailed?orderId=" + orderId
             }
         };
 
