@@ -356,6 +356,22 @@ public class OrderService : IOrderService
         return filter;
     }
 
+    public async Task<bool> CaptureOrderAsync(string orderPaypalId)
+    {
+        // Construct a request object and set desired parameters
+        // Replace ORDER-ID with the approved order id from create order
+        var request = new OrdersCaptureRequest("orderPaypalId");
+        request.RequestBody(new OrderActionRequest());
+        PaypalResponse response = await PaypalClient.Execute(request);
+        var statusCode = response.StatusCode;
+        OrderPaypal result = response.Result<OrderPaypal>();
+        if (result.Status == "COMPLETED")
+        {
+            return true;
+        }
+        return false;
+    }
+
     private SortDefinition<Order> CreateSortFilter(string sortType, string sortBy)
     {
         if (sortType == "Asc")
@@ -456,22 +472,32 @@ public class OrderService : IOrderService
         return details;
     }
 
-    public async Task<NotifyDto> NotifyPay(string orderId)
+    public async Task<NotifyDto> NotifyPay(string orderId, string orderPaypalId)
     {
         var order = await orderRepository.FindByIdAsync(orderId);
         if (order == null)
         {
             throw new Exception("Order's not exist!");
         }
-        var dto = new NotifyDto()
+        if (await CaptureOrderAsync(orderPaypalId))
+        {
+            var dto = new NotifyDto()
+            {
+                UserId = order.UserId,
+                Header = "Thanh tóan thành công",
+                Message = "Thanh toán " + order.Total + " thành công!"
+            };
+            order.PaymentMethod = "Paypal - Thanh toán thành công";
+            await orderRepository.UpdateAsync(order);
+            return dto;
+        }
+        return new NotifyDto()
         {
             UserId = order.UserId,
-            Header = "Thanh tóan thành công",
-            Message = "Thanh toán " + order.Total + " thành công!"
+            Header = "Thanh tóan chưa thành công",
+            Message = "Thanh toán " + order.Total + " chưa thành công!"
         };
-        order.PaymentMethod = "Paypal - Thanh toán thành công";
-        await orderRepository.UpdateAsync(order);
-        return dto;
+
     }
 
     public async Task<NotifyDto> NotifyCancel(string orderId)

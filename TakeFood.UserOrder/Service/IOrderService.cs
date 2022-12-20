@@ -12,6 +12,6 @@ public interface IOrderService
     Task<OrderDetailDto> GetOrderDetail(string userId, string orderId);
     Task<OrderDetailDto> GetOrderDetail(string orderId);
     Task<OrderPagingResponse> GetPagingOrder(GetPagingOrderDto dto);
-    Task<NotifyDto> NotifyPay(string orderId);
+    Task<NotifyDto> NotifyPay(string orderId, string orderPaypalId);
     Task<NotifyDto> NotifyCancel(string orderId);
 }

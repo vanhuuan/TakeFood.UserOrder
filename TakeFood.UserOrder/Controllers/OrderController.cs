@@ -62,7 +62,7 @@ public class OrderController : BaseController
 
     [HttpGet]
     [Route("NotifyPay")]
-    public async Task<IActionResult> NotifyPayAsync([Required] string orderId)
+    public async Task<IActionResult> NotifyPayAsync([Required] string orderId, [Required] string orderPaypalId)
     {
         try
         {
@@ -70,7 +70,7 @@ public class OrderController : BaseController
             {
                 return BadRequest();
             }
-            var rs = await OrderService.NotifyPay(orderId);
+            var rs = await OrderService.NotifyPay(orderId, orderPaypalId);
             foreach (var connectionId in NotificationHub._connections.GetConnections(rs.UserId))
             {
                 await notificationUserHubContext.Clients.Client(connectionId).SendAsync("sendToUser", rs.Header, rs.Message);
