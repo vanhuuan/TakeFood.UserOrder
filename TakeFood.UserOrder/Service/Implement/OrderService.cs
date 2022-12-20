@@ -358,18 +358,23 @@ public class OrderService : IOrderService
 
     public async Task<bool> CaptureOrderAsync(string orderPaypalId)
     {
-        // Construct a request object and set desired parameters
-        // Replace ORDER-ID with the approved order id from create order
-        var request = new OrdersCaptureRequest("orderPaypalId");
-        request.RequestBody(new OrderActionRequest());
-        PaypalResponse response = await PaypalClient.Execute(request);
-        var statusCode = response.StatusCode;
-        OrderPaypal result = response.Result<OrderPaypal>();
-        if (result.Status == "COMPLETED")
+        try
         {
-            return true;
+            var request = new OrdersCaptureRequest(orderPaypalId);
+            request.RequestBody(new OrderActionRequest());
+            PaypalResponse response = await PaypalClient.Execute(request);
+            var statusCode = response.StatusCode;
+            OrderPaypal result = response.Result<OrderPaypal>();
+            if (result.Status == "COMPLETED")
+            {
+                return true;
+            }
+            return false;
         }
-        return false;
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private SortDefinition<Order> CreateSortFilter(string sortType, string sortBy)
