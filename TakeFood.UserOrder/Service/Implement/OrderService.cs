@@ -87,6 +87,7 @@ public class OrderService : IOrderService
         order.Note = dto.Note;
         order.StoreId = dto.StoreId;
         order.ReceiveTime = DateTime.MinValue;
+        order.PaymentMethod = dto.PaymentMethod;
         var foodsStoreId = foodRepository.FindAsync(x => x.StoreId == order.StoreId).Result.Select(x => x.Id);
         order = await orderRepository.InsertAsync(order);
         double money = 0;
@@ -141,10 +142,7 @@ public class OrderService : IOrderService
         {
             order.PaymentMethod = "Paypal - Chưa thanh toán";
             paymentUrl = await CreateOrderPaypalAsync(order.Total, order.Id);
-        }
-        else
-        {
-            order.PaymentMethod = dto.PaymentMethod;
+            await orderRepository.UpdateAsync(order);
         }
         return paymentUrl;
     }
